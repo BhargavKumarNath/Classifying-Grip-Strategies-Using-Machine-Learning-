@@ -1,0 +1,33 @@
+64 Classifying grip strategies using machine learning on 3D motion capture data
+
+Background
+The analysis of human grasping behavior reveals how 3D objects are internally represented in the brain. By analyzing kinematic data we can classify grasping strategies and investigate how humans plan and execute reaching-to-grasp movements based on an object’s shape and orientation. This project will focus on developing a machine learning or multivariate statistical methodology to classify grip strategies. A pre-collected dataset of 3D motion capture data will be provided. The student will explore techniques to extract meaningful patterns, leveraging their mathematical and computational skills applied to a real-world dataset with interdisciplinary applications.
+
+Aim
+• Develop a reproducible machine learning or multivariate statistical pipeline to classify grip strategies based on kinematic features
+• Explore dimensionality reduction techniques (e.g., PCA) to identify key patterns in the data
+• Investigate clustering methods to group similar grip strategies
+• Visualize and interpret results to understand the relationship between kinematic features and grasp planning
+• Optional: apply supervised learning algorithms (e.g., random forest, SVM)
+ to classify grip strategies based on predefined conditions (e.g., object shape
+ and orientation)
+
+
+
+Data Availability
+ A pre-collected and pre-processed dataset (csv file) including:
+ • 3D motion capture recordings of hand and finger movements
+ • kinematic features derived from the raw data
+ • trials involving various object shapes and orientations
+ Prerequisites
+ programming proficiency in Python and/or R; understanding of basic statistical
+ and mathematical concepts (dimensionality reduction and clustering)
+ Preferred background knowledge
+ Interest in data visualization and applied machine learning; previous experience
+ with motion capture data or time series data is helpful but not required.
+ References
+ Jeannerod, M. (1984). The timing of natural prehension movements. Journal of
+ motor behavior, 16(3), 235-254.
+ Campagnoli, C., & Domini, F. (2019). Does depth-cue combination yield iden
+tical biases in perception and grasping?. Journal of Experimental Psychology:
+ Human Perception and Performance, 45(5), 659.
