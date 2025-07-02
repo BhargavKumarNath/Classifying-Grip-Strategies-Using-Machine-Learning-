@@ -1,5 +1,5 @@
 data/01_raw/
-data/02_processed/combined_trajectory_data.csv
+data/02_processed/comprehensive_master_data_universal.parquet
 dissertation-templateDSA.tex
 notebooks/aiming.txt
 notebooks/prehension.txt
