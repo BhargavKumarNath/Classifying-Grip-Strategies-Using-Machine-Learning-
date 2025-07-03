@@ -1,0 +1,196 @@
+### Basic Data Overview ###
+First 5 rows of the dataframe:
+   subjName  trialN  indexX_unified  indexY_unified  indexZ_unified  thumbX_unified  ...       MGA   timeMGA  movTime  signal_grasp  signal_nan       grip_strategy_label
+0         1       1        0.064798        0.100376        0.033471       -0.003596  ...  0.130996  2.841667    3.375          True       False  aiming_clear_black_three
+1         1       1        0.064706        0.100347        0.033518       -0.003607  ...  0.130996  2.841667    3.375          True       False  aiming_clear_black_three
+2         1       1        0.064627        0.100303        0.033572       -0.003628  ...  0.130996  2.841667    3.375          True       False  aiming_clear_black_three
+3         1       1        0.064533        0.100263        0.033610       -0.003650  ...  0.130996  2.841667    3.375          True       False  aiming_clear_black_three
+4         1       1        0.064459        0.100206        0.033637       -0.003663  ...  0.130996  2.841667    3.375          True       False  aiming_clear_black_three
+
+[5 rows x 26 columns]
+
+DataFrame Info:
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 2836573 entries, 0 to 2836572
+Data columns (total 26 columns):
+ #   Column               Dtype  
+---  ------               -----  
+ 0   subjName             int64  
+ 1   trialN               int64  
+ 2   indexX_unified       float64
+ 3   indexY_unified       float64
+ 4   indexZ_unified       float64
+ 5   thumbX_unified       float64
+ 6   thumbY_unified       float64
+ 7   thumbZ_unified       float64
+ 8   wristX_unified       float64
+ 9   wristY_unified       float64
+ 10  wristZ_unified       float64
+ 11  FX                   float64
+ 12  FY                   float64
+ 13  FZ                   float64
+ 14  FVel                 float64
+ 15  FAcc                 float64
+ 16  MVel                 float64
+ 17  MAcc                 float64
+ 18  MDec                 float64
+ 19  pathLength           float64
+ 20  MGA                  float64
+ 21  timeMGA              float64
+ 22  movTime              float64
+ 23  signal_grasp         bool
+ 24  signal_nan           bool
+ 25  grip_strategy_label  object
+dtypes: bool(2), float64(21), int64(2), object(1)
+memory usage: 524.8+ MB
+
+Descriptive Statistics:
+           subjName        trialN  indexX_unified  indexY_unified  indexZ_unified  ...          MDec    pathLength           MGA       timeMGA       movTime
+count  2.836573e+06  2.836573e+06    2.836573e+06    2.836573e+06    2.836573e+06  ...  2.836573e+06  2.836573e+06  2.836573e+06  2.836573e+06  2.836573e+06
+mean   9.734076e+00  6.261914e+01    3.922181e-02    7.313019e-02    1.283246e-01  ... -6.015715e+00  5.435795e-01  1.116549e-01  2.933265e+00  3.712028e+00
+std    5.322838e+00  4.342220e+01    3.314342e-02    3.450012e-02    1.373989e-01  ...  1.953394e+00  1.378583e-01  1.296941e-02  4.624222e-01  4.745364e-01
+min    1.000000e+00  1.000000e+00   -2.918740e-01   -9.417198e-02   -1.104450e-01  ... -1.647830e+01  2.732296e-01  7.421674e-02  0.000000e+00  8.750000e-01
+25%    6.000000e+00  2.000000e+01    1.830400e-02    4.252600e-02    2.782500e-02  ... -6.802238e+00  4.346595e-01  1.036442e-01  2.700000e+00  3.416667e+00
+50%    9.000000e+00  5.900000e+01    3.196700e-02    6.970300e-02    4.279400e-02  ... -5.956471e+00  5.459026e-01  1.111433e-01  2.975000e+00  3.750000e+00
+75%    1.400000e+01  1.000000e+02    5.969400e-02    9.922500e-02    2.316190e-01  ... -4.564118e+00  6.308671e-01  1.179311e-01  3.175000e+00  4.025000e+00
+max    2.000000e+01  1.440000e+02    2.922080e-01    5.143430e-01    4.670160e-01  ... -1.626188e+00  1.725605e+00  1.727037e-01  5.108333e+00  5.658333e+00
+
+[8 rows x 23 columns]
+------------------------------
+
+### Data Quality Check ###
+Null values in each column:
+subjName               0
+trialN                 0
+indexX_unified         0
+indexY_unified         0
+indexZ_unified         0
+thumbX_unified         0
+thumbY_unified         0
+thumbZ_unified         0
+wristX_unified         0
+wristY_unified         0
+wristZ_unified         0
+FX                     0
+FY                     0
+FZ                     0
+FVel                   0
+FAcc                   0
+MVel                   0
+MAcc                   0
+MDec                   0
+pathLength             0
+MGA                    0
+timeMGA                0
+movTime                0
+signal_grasp           0
+signal_nan             0
+grip_strategy_label    0
+dtype: int64
+
+Number of duplicate rows: 342370
+------------------------------
+
+### Target Variable Analysis ###
+Unique grip strategy labels:
+['aiming_clear_black_three' 'aiming_clear_black_two'
+ 'aiming_clear_wood_three' 'aiming_clear_wood_one' 'aiming_clear_wood_two'
+ 'aiming_clear_black_one' 'aiming_mono_black_three'
+ 'aiming_mono_black_two' 'aiming_mono_wood_three' 'aiming_mono_wood_one'
+ 'aiming_mono_wood_two' 'aiming_mono_black_one' 'aiming_bino_black_three'
+ 'aiming_bino_black_two' 'aiming_bino_wood_three' 'aiming_bino_wood_one'
+ 'aiming_bino_wood_two' 'aiming_bino_black_one'
+ 'prehension_clear_black_near' 'prehension_clear_black_far'
+ 'prehension_clear_wood_middle' 'prehension_clear_black_middle'
+ 'prehension_clear_wood_near' 'prehension_clear_wood_far'
+ 'prehension_strong_black_near' 'prehension_strong_black_far'
+ 'prehension_strong_wood_middle' 'prehension_strong_black_middle'
+ 'prehension_strong_wood_near' 'prehension_strong_wood_far'
+ 'prehension_weak_black_near' 'prehension_weak_black_far'
+ 'prehension_weak_wood_middle' 'prehension_weak_black_middle'
+ 'prehension_weak_wood_near' 'prehension_weak_wood_far'
+ 'visual_illusion_mono_Ponzo_cross_30.0'
+ 'visual_illusion_mono_Ebbinghaus_square_30.0'
+ 'visual_illusion_mono_Ebbinghaus_cross_35.0'
+ 'visual_illusion_mono_Ponzo_cross_40.0'
+ 'visual_illusion_mono_Ponzo_square_30.0'
+ 'visual_illusion_mono_Ebbinghaus_cross_40.0'
+ 'visual_illusion_mono_Ebbinghaus_square_35.0'
+ 'visual_illusion_mono_Ebbinghaus_square_40.0'
+ 'visual_illusion_mono_Ponzo_square_40.0'
+ 'visual_illusion_mono_Ponzo_cross_35.0'
+ 'visual_illusion_mono_Ponzo_square_35.0'
+ 'visual_illusion_bino_Ebbinghaus_cross_35.0'
+ 'visual_illusion_bino_Ponzo_square_40.0'
+ 'visual_illusion_bino_Ebbinghaus_square_30.0'
+ 'visual_illusion_bino_Ponzo_cross_30.0'
+ 'visual_illusion_bino_Ponzo_square_30.0'
+ 'visual_illusion_bino_Ebbinghaus_cross_30.0'
+ 'visual_illusion_bino_Ponzo_cross_40.0'
+ 'visual_illusion_bino_Ponzo_cross_35.0'
+ 'visual_illusion_bino_Ebbinghaus_square_35.0'
+ 'visual_illusion_bino_Ebbinghaus_cross_40.0'
+ 'visual_illusion_bino_Ponzo_square_35.0'
+ 'visual_illusion_clear_Ponzo_square_40.0'
+ 'visual_illusion_clear_Ebbinghaus_cross_35.0'
+ 'visual_illusion_clear_Ebbinghaus_square_35.0'
+ 'visual_illusion_clear_Ponzo_cross_40.0'
+ 'visual_illusion_clear_Ebbinghaus_square_30.0'
+ 'visual_illusion_clear_Ponzo_square_35.0'
+ 'visual_illusion_clear_Ponzo_cross_35.0'
+ 'visual_illusion_clear_Ebbinghaus_square_40.0'
+ 'visual_illusion_clear_Ebbinghaus_cross_30.0'
+ 'visual_illusion_clear_Ponzo_cross_30.0'
+ 'visual_illusion_mono_Ebbinghaus_cross_30.0'
+ 'visual_illusion_clear_Ponzo_square_30.0'
+ 'visual_illusion_clear_Ebbinghaus_cross_40.0'
+ 'visual_illusion_bino_Ebbinghaus_square_40.0']
+
+Number of unique grip strategy labels: 72
+
+Distribution of grip strategy labels:
+grip_strategy_label
+prehension_clear_wood_far                      415293
+prehension_strong_wood_far                      73502
+prehension_clear_black_far                      73369
+prehension_weak_wood_far                        73165
+prehension_strong_wood_middle                   72824
+                                                ...
+visual_illusion_mono_Ponzo_cross_40.0            3470
+visual_illusion_mono_Ebbinghaus_square_40.0      3457
+visual_illusion_bino_Ebbinghaus_cross_35.0       3229
+visual_illusion_clear_Ponzo_square_40.0          3094
+visual_illusion_bino_Ebbinghaus_square_40.0      2501
+Name: count, Length: 72, dtype: int64
+------------------------------
+
+### Trial and Sequence Length Analysis ###
+Descriptive statistics of trial lengths (sequences):
+count      2876.000000
+mean        986.291029
+std        6397.623630
+min         106.000000
+25%         817.000000
+50%         921.000000
+75%         995.000000
+max      343808.000000
+dtype: float64
+------------------------------
+
+### Feature Preparation and Final Checks ###
+Number of features: 23
+Feature columns:
+['indexX_unified', 'indexY_unified', 'indexZ_unified', 'thumbX_unified', 'thumbY_unified', 'thumbZ_unified', 'wristX_unified', 'wristY_unified', 'wristZ_unified', 'FX', 'FY', 'FZ', 'FVel', 'FAcc', 'MVel', 'MAcc', 'MDec', 'pathLength', 'MGA', 'timeMGA', 'movTime', 'signal_grasp', 'signal_nan']
+
+Total number of sequences: 2876
+Sequence length stats: min=106, max=343808, mean=986.29
+
+Dataset is now prepared as a list of sequences (X) and corresponding labels (y).
+------------------------------
+
+### Summary of Analysis ###
+The dataset appears to be in good shape for the next stage of building a transformer model.
+- **No Missing Data**: The dataset is clean with no null values.
+- **Target Variable**: There are 75 unique grip strategy labels. The distribution is imbalanced, which might require techniques like stratified sampling or using class weights in the model.
+- **Sequence Length**: The sequence lengths vary significantly. This is a key consideration for the transformer model, and you will need to decide on a strategy for handling this, such as padding or truncating sequences to a fixed length.
+- **Features**: The feature set is well-defined and ready to be used as input for the model.
