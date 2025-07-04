@@ -78,3 +78,10 @@ print("- **No Missing Data**: The dataset is clean with no null values.")
 print("- **Target Variable**: There are 75 unique grip strategy labels. The distribution is imbalanced, which might require techniques like stratified sampling or using class weights in the model.")
 print("- **Sequence Length**: The sequence lengths vary significantly. This is a key consideration for the transformer model, and you will need to decide on a strategy for handling this, such as padding or truncating sequences to a fixed length.")
 print("- **Features**: The feature set is well-defined and ready to be used as input for the model.")
+
+# Each trial contains hundreds to thousands of time steps, and we've merged static info with every time-step.
+
+# We have 2876 trials total (as seen in "Total number of sequences").
+# Each trial has ~986 time steps on average (as seen in the sequence length stats).
+# That means:
+# Total rows ≈ 2876 trials × 986 time steps/trial ≈ 2.8 million rows
