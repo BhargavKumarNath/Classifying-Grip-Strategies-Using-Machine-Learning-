@@ -1,5 +1,6 @@
 data/01_raw/
 data/02_processed/comprehensive_master_data_universal.parquet
+data/02_processed/GripFormer_preprocessed_dataset.csv
 dissertation-templateDSA.tex
 notebooks/aiming.txt
 notebooks/prehension.txt
