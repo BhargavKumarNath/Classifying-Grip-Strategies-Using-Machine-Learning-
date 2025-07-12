@@ -1,5 +1,6 @@
 import pandas as pd
 
+# Set display options to ensure all columns are shown
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', 1000) 
 
@@ -25,6 +26,12 @@ def inspect_csv_data(filepath):
         print(df.head(3))
         print("\n" + "---" * 20 + "\n")
 
+        # 2. Display all column names
+        print("## Column Names")
+        print("All the features available in the dataset.\n")
+        print(list(df.columns))
+        print("\n" + "---" * 20 + "\n")
+
         # 3. Display data information (data types, non-null counts)
         print("## Data Information (Types & Non-Nulls)")
         print("A summary of column data types and memory usage.\n")
@@ -34,7 +41,7 @@ def inspect_csv_data(filepath):
         # 4. Display the shape of the dataset
         rows, cols = df.shape
         print("## Dataset Shape")
-        print(f"The dataset has {rows} rows and {cols} columns.\n")
+        print(f"The dataset has {rows} rows and {cols} columns. 📈\n")
         print(f"Shape: {df.shape}")
         print("\n" + "---" * 20 + "\n")
 
