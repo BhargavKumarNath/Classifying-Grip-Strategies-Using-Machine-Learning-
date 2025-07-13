@@ -20,7 +20,7 @@ class GripSequenceDataset(Dataset):
         return sequence_tensor, label_tensor
     
 if __name__ == "__main__":
-    PROCESSED_DATA_PATH = "C:/CourseWork/Dissertation Classifying grip strategies using machine learning/data/03_processed_dl/"
+    PROCESSED_DATA_PATH = "C:/CourseWork/Classifying_grip_strategies_ml/data/03_processed_dl/"
     X_TRAIN_PATH = f"{PROCESSED_DATA_PATH}/X_train.npy"
     Y_TRAIN_PATH = f"{PROCESSED_DATA_PATH}/y_train.npy"
 

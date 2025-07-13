@@ -1,0 +1,23 @@
+artifact_path: file:///C:/CourseWork/Classifying_grip_strategies_ml/mlruns/821534029805278476/models/m-417a428dbdb149008de275bda5599f9d/artifacts
+flavors:
+  python_function:
+    config:
+      device: null
+    data: data
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.pytorch
+    pickle_module_name: mlflow.pytorch.pickle_module
+    python_version: 3.13.0
+  pytorch:
+    code: null
+    model_data: data
+    pytorch_version: 2.7.1+cu126
+mlflow_version: 3.1.1
+model_id: m-417a428dbdb149008de275bda5599f9d
+model_size_bytes: 2691681
+model_uuid: m-417a428dbdb149008de275bda5599f9d
+prompts: null
+run_id: adda61b93841474a85b295efeb0c7ebb
+utc_time_created: '2025-07-13 00:25:28.978348'

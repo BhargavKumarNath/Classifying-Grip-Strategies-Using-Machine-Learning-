@@ -1,0 +1,10 @@
+artifact_location: file:///C:/CourseWork/Classifying_grip_strategies_ml/mlruns/821534029805278476/models/m-aed3c72c95864034a501043bf9c76f38/artifacts
+creation_timestamp: 1752366383604
+experiment_id: '821534029805278476'
+last_updated_timestamp: 1752366391741
+model_id: m-aed3c72c95864034a501043bf9c76f38
+model_type: null
+name: best_model
+source_run_id: adda61b93841474a85b295efeb0c7ebb
+status: 2
+status_message: null

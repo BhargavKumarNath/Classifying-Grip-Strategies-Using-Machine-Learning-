@@ -2,9 +2,9 @@
 
 # Data Parameters
 data:
-  raw_path = "C:/CourseWork/Dissertation Classifying grip strategies using machine learning/data/02_processed/GripFormer_preprocessed_dataset.csv"
+  raw_path: "C:/CourseWork/Classifying_grip_strategies_ml/data/02_processed/GripFormer_preprocessed_dataset.csv"
 
-  processed_path = "C:/CourseWork/Dissertation Classifying grip strategies using machine learning/data/03_processed_dl/"
+  processed_path: "C:/CourseWork/Classifying_grip_strategies_ml/data/03_processed_dl/"
 
 # Model Parameters
 model:
@@ -37,5 +37,5 @@ training:
 
 # Asset Paths
 assets:
-  scaler_path: "C:/CourseWork/Dissertation Classifying grip strategies using machine learning/models/scaler.joblib"
-  model_save_path: "C:/CourseWork/Dissertation Classifying grip strategies using machine learning/models/"
+  scaler_path: "C:/CourseWork/Classifying_grip_strategies_ml/models/scaler.joblib"
+  model_save_path: "C:/CourseWork/Classifying_grip_strategies_ml/models/"
