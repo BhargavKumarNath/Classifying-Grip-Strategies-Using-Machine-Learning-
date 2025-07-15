@@ -51,67 +51,59 @@ class PositionalEncoding(nn.Module):
 class GripTransformerClassifier(nn.Module):
     """
     A Transformer-based classifier using an encoder architecture.
+    (This is the updated version)
     """
     def __init__(self, input_features, num_classes, d_model, nhead, num_encoder_layers, dim_feedforward, dropout, seq_length):
         super(GripTransformerClassifier, self).__init__()
         self.d_model = d_model
         
-        # 1. Input Embedding Layer
-        # Projects the 18 input features to the model's internal dimension (d_model)
         self.input_embedding = nn.Linear(input_features, d_model)
-        
-        # 2. Positional Encoding
-        # We add 1 to seq_length because we will prepend a [CLS] token
         self.pos_encoder = PositionalEncoding(d_model, dropout, max_len=seq_length + 1)
         
-        # 3. Transformer Encoder
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=d_model,
-            nhead=nhead,
-            dim_feedforward=dim_feedforward,
-            dropout=dropout,
-            batch_first=True  # Important: expects (batch, seq, feature)
+            d_model=d_model, nhead=nhead, dim_feedforward=dim_feedforward,
+            dropout=dropout, batch_first=True
         )
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_encoder_layers)
         
-        # 4. CLS (Classification) Token
-        # A learnable parameter that will act as an aggregate representation of the sequence
         self.cls_token = nn.Parameter(torch.zeros(1, 1, d_model))
-        
-        # 5. Classification Head
         self.classifier = nn.Linear(d_model, num_classes)
 
-    def forward(self, x):
-        # x shape: (batch_size, seq_length, input_features)
+    def forward(self, x, return_attention=False):
         batch_size = x.shape[0]
-
-        # Project input features to d_model
-        x = self.input_embedding(x) # -> (batch_size, seq_length, d_model)
+        x = self.input_embedding(x)
         
-        # Prepend the [CLS] token to each sequence in the batch
-        cls_tokens = self.cls_token.expand(batch_size, -1, -1) # -> (batch_size, 1, d_model)
-        x = torch.cat((cls_tokens, x), dim=1) # -> (batch_size, seq_length + 1, d_model)
+        cls_tokens = self.cls_token.expand(batch_size, -1, -1)
+        x = torch.cat((cls_tokens, x), dim=1)
         
-        # Add positional encoding. Note: PyTorch's PE implementation expects (seq, batch, feat)
-        # so we permute, apply, and permute back.
-        x = x.permute(1, 0, 2) # -> (seq_length + 1, batch_size, d_model)
+        x = x.permute(1, 0, 2)
         x = self.pos_encoder(x)
-        x = x.permute(1, 0, 2) # -> (batch_size, seq_length + 1, d_model)
+        x = x.permute(1, 0, 2)
 
-        # Pass through the transformer encoder
-        transformer_output = self.transformer_encoder(x) # -> (batch_size, seq_length + 1, d_model)
+        attention_weights = None
+        for i, layer in enumerate(self.transformer_encoder.layers):
+            if i == len(self.transformer_encoder.layers) - 1 and return_attention:
+                x, attention_weights = layer.self_attn(x, x, x, need_weights=True)
+                x = layer.dropout1(x)
+                x = layer.norm1(x) 
+                
+                x_main = layer(x) 
+                x = x_main 
+            else:
+                 x = layer(x)
         
-        # Extract the output of the [CLS] token (it's the first one)
-        cls_output = transformer_output[:, 0, :] # -> (batch_size, d_model)
+        if not return_attention:
+            transformer_output = x
+        else: 
+            transformer_output = x
+
+        cls_output = transformer_output[:, 0, :]
+        logits = self.classifier(cls_output)
         
-        # Pass the [CLS] token's output through the classifier
-        logits = self.classifier(cls_output) # -> (batch_size, num_classes)
+        if return_attention:
+            return logits, attention_weights
         
         return logits
-
-
-
-
 
 if __name__ == '__main__':
     BATCH_SIZE = 4
