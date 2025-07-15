@@ -2,37 +2,31 @@ import torch
 import torch.nn as nn
 import math
 
+# (The LSTMClassifier and PositionalEncoding classes remain the same)
 class LSTMClassifier(nn.Module):
-    """
-    A simple but effective LSTM-based classifier for sequence data.
-    """
+    # ... (no changes here) ...
     def __init__(self, input_size, hidden_size, num_layers, num_classes, dropout=0.2):
         super(LSTMClassifier, self).__init__()
         self.lstm = nn.LSTM(
             input_size=input_size,
             hidden_size=hidden_size,
             num_layers=num_layers,
-            batch_first=True,  
+            batch_first=True,
             dropout=dropout if num_layers > 1 else 0
         )
         self.fc = nn.Linear(hidden_size, num_classes)
 
     def forward(self, x):
         _, (h_n, _) = self.lstm(x)
-        last_hidden_state = h_n[-1] 
-        
-        out = self.fc(last_hidden_state) 
+        last_hidden_state = h_n[-1]
+        out = self.fc(last_hidden_state)
         return out
 
 class PositionalEncoding(nn.Module):
-    """
-    Injects positional information into the input embeddings.
-    Standard implementation from the "Attention is All You Need" paper.
-    """
+    # ... (no changes here) ...
     def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
-
         position = torch.arange(max_len).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
         pe = torch.zeros(max_len, 1, d_model)
@@ -41,17 +35,14 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('pe', pe)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            x: Tensor, shape [seq_len, batch_size, embedding_dim]
-        """
         x = x + self.pe[:x.size(0)]
         return self.dropout(x)
 
+
 class GripTransformerClassifier(nn.Module):
     """
-    A Transformer-based classifier using an encoder architecture.
-    (This is the updated version)
+    A Transformer-based classifier.
+    (Final version with a clean method for returning attention)
     """
     def __init__(self, input_features, num_classes, d_model, nhead, num_encoder_layers, dim_feedforward, dropout, seq_length):
         super(GripTransformerClassifier, self).__init__()
@@ -71,39 +62,46 @@ class GripTransformerClassifier(nn.Module):
 
     def forward(self, x, return_attention=False):
         batch_size = x.shape[0]
-        x = self.input_embedding(x)
+        x_emb = self.input_embedding(x) # Embed features
         
         cls_tokens = self.cls_token.expand(batch_size, -1, -1)
-        x = torch.cat((cls_tokens, x), dim=1)
+        x_with_cls = torch.cat((cls_tokens, x_emb), dim=1)
         
-        x = x.permute(1, 0, 2)
-        x = self.pos_encoder(x)
-        x = x.permute(1, 0, 2)
+        # Permute for positional encoding, which expects (seq, batch, feat)
+        x_with_cls = x_with_cls.permute(1, 0, 2)
+        x_pos = self.pos_encoder(x_with_cls)
+        x_pos = x_pos.permute(1, 0, 2) # Permute back to (batch, seq, feat)
 
-        attention_weights = None
-        for i, layer in enumerate(self.transformer_encoder.layers):
-            if i == len(self.transformer_encoder.layers) - 1 and return_attention:
-                x, attention_weights = layer.self_attn(x, x, x, need_weights=True)
-                x = layer.dropout1(x)
-                x = layer.norm1(x) 
-                
-                x_main = layer(x) 
-                x = x_main 
-            else:
-                 x = layer(x)
-        
         if not return_attention:
-            transformer_output = x
-        else: 
-            transformer_output = x
-
-        cls_output = transformer_output[:, 0, :]
-        logits = self.classifier(cls_output)
-        
-        if return_attention:
+            # Normal forward pass during training/evaluation
+            transformer_output = self.transformer_encoder(x_pos)
+            cls_output = transformer_output[:, 0, :]
+            logits = self.classifier(cls_output)
+            return logits
+        else:
+            # Special forward pass to extract attention from the last layer
+            attention_weights = None
+            output = x_pos
+            # Iterate through all but the last layer normally
+            for i in range(self.transformer_encoder.num_layers - 1):
+                output = self.transformer_encoder.layers[i](output)
+            
+            # For the last layer, we call it manually to get weights
+            last_layer = self.transformer_encoder.layers[-1]
+            
+            # This is the key part: we manually call the self-attention block
+            # of the final layer and set need_weights=True
+            attn_output, attention_weights = last_layer.self_attn(
+                last_layer.norm1(output), last_layer.norm1(output), last_layer.norm1(output),
+                need_weights=True
+            )
+            output = output + last_layer.dropout1(attn_output)
+            # Finish the rest of the last layer's computations
+            output = output + last_layer._ff_block(last_layer.norm2(output))
+            
+            cls_output = output[:, 0, :]
+            logits = self.classifier(cls_output)
             return logits, attention_weights
-        
-        return logits
 
 if __name__ == '__main__':
     BATCH_SIZE = 4

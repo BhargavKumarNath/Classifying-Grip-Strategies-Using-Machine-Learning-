@@ -18,6 +18,16 @@ lstm:
   num_layers: 2
   dropout: 0.2
 
+# --- CNN-Transformer Hyperparameters ---
+cnn_transformer:
+  cnn_out_channels: 64    # Output channels of the first CNN layer
+  d_model: 128            # Final dimension after CNN block, must match Transformer's d_model
+  nhead: 4
+  num_encoder_layers: 3
+  dim_feedforward: 512
+  dropout: 0.15          
+
+
 # Transformer Hyperparameters 
 transformer:
   d_model: 128      # Internal dimension of the model.
@@ -28,13 +38,15 @@ transformer:
 
 # Training Parameters
 training:
+  model_to_train: "CNNTransformer"
   experiment_name: "GripTransformer"
   device: "cuda" 
-  epochs: 50
+  epochs: 75
   batch_size: 32
   learning_rate: 0.0001
   optimizer: "AdamW"
   schedular: "ReduceLROnPlateau"
+  label_smoothing: 0.1
 
 # Asset Paths
 assets:

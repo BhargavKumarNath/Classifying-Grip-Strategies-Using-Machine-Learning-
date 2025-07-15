@@ -1,0 +1,44 @@
+Classificaiton Report on Test Set
+                                              precision    recall  f1-score   support
+
+                       aiming_bino_black_one       0.33      0.50      0.40         6
+                     aiming_bino_black_three       0.21      0.25      0.23        12
+                       aiming_bino_black_two       0.12      0.11      0.12         9
+                        aiming_bino_wood_one       0.12      0.10      0.11        10
+                      aiming_bino_wood_three       0.15      0.18      0.17        11
+                        aiming_bino_wood_two       0.00      0.00      0.00         8
+                      aiming_clear_black_one       0.09      0.17      0.12         6
+                    aiming_clear_black_three       0.19      0.33      0.24         9
+                      aiming_clear_black_two       0.33      0.12      0.18         8
+                       aiming_clear_wood_one       0.27      0.31      0.29        13
+                     aiming_clear_wood_three       0.25      0.08      0.12        12
+                       aiming_clear_wood_two       0.06      0.12      0.08         8
+                       aiming_mono_black_one       0.20      0.18      0.19        11
+                     aiming_mono_black_three       0.56      0.33      0.42        15
+                       aiming_mono_black_two       0.00      0.00      0.00         7
+                        aiming_mono_wood_one       0.67      0.20      0.31        10
+                      aiming_mono_wood_three       0.33      0.50      0.40         6
+                        aiming_mono_wood_two       0.11      0.11      0.11         9
+                  prehension_clear_black_far       0.83      0.33      0.48        15
+               prehension_clear_black_middle       0.57      0.44      0.50         9
+                 prehension_clear_black_near       0.44      0.54      0.48        13
+                   prehension_clear_wood_far       0.42      0.62      0.50         8
+                prehension_clear_wood_middle       0.55      0.60      0.57        10
+                  prehension_clear_wood_near       0.50      0.55      0.52        11
+                 prehension_strong_black_far       0.67      0.40      0.50        10
+              prehension_strong_black_middle       0.67      0.36      0.47        11
+                prehension_strong_black_near       0.50      0.57      0.53         7
+                  prehension_strong_wood_far       0.50      0.67      0.57         9
+               prehension_strong_wood_middle       0.73      0.79      0.76        14
+                 prehension_strong_wood_near       0.67      0.46      0.55        13
+                   prehension_weak_black_far       0.83      0.83      0.83        12
+                prehension_weak_black_middle       0.60      0.60      0.60        10
+                  prehension_weak_black_near       0.78      0.70      0.74        10
+                    prehension_weak_wood_far       0.65      1.00      0.79        11
+                 prehension_weak_wood_middle       0.38      0.62      0.48         8
+                   prehension_weak_wood_near       0.86      0.86      0.86         7
+visual_illusion_clear_Ebbinghaus_square_35.0       1.00      1.00      1.00        12
+
+                                    accuracy                           0.43       370
+                                   macro avg       0.44      0.42      0.41       370
+                                weighted avg       0.46      0.43      0.43       370
