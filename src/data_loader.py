@@ -2,6 +2,17 @@ import torch
 from torch.utils.data import Dataset
 import numpy as np
 
+
+# This script defines a PyTorch Dataset class to load and serve preprocessed sequence data (saved as .npy files) for deep learning models like Transformers.
+# PyTorch provides a base class called torch.utils.data.Dataset.
+# You can subclass it to define how your custom data (like .npy files) should be:
+
+# loaded from disk 
+
+# converted to tensors
+
+# served one-by-one to the model during training
+
 class GripSequenceDataset(Dataset):
     """ Custom PyTorch Dataset for loading grip strategy sequence"""
     def __init__(self, features_path: str, labels_path: str):

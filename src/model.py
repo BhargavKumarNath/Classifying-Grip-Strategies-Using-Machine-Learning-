@@ -1,3 +1,11 @@
+# This script defines two deep learning models in PyTorch for grip strategy classification:
+
+# LSTMClassifier – A standard LSTM-based sequence classifier.
+
+# GripTransformerClassifier – A custom Transformer-based classifier with an optional mechanism to return attention weights.
+
+# It also includes positional encoding to inject order into the Transformer input and a test block to verify both models using dummy data.
+
 import torch
 import torch.nn as nn
 import math

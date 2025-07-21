@@ -1,3 +1,52 @@
+# The script is the main entry point for training a Transformer-based classifier model to classify grip strategies from time-series sensor data.
+
+# Loads configuration from a YAML file to get parameters for data paths, model architecture, training settings, etc.
+
+# Creates a unique output directory to save the results of each training run, timestamped for easy tracking.
+
+# Loads the training and validation datasets using a custom PyTorch Dataset class (GripSequenceDataset), and wraps them in DataLoaders.
+
+# Initializes the Transformer model (GripTransformerClassifier) with specified hyperparameters.
+
+# Sets up the training components:
+
+# Loss function (CrossEntropyLoss)
+# Defines the criterion to measure how well the model's predictions match the true labels, specifically for multi-class classification.
+
+
+# Optimizer (AdamW)
+# Sets up the optimization algorithm that updates the model’s parameters to minimize the loss during training, using Adam with weight decay for better regularization.
+
+
+# Learning rate scheduler (ReduceLROnPlateau)
+# Automatically reduces the learning rate when the validation performance plateaus, helping the model converge better.
+
+
+# Evaluation metric (macro F1 score)
+# Chooses the metric to evaluate model performance across all classes equally by calculating the average F1 score.
+
+
+# Runs the training loop for a specified number of epochs:
+# Repeats the process of training and validating the model over multiple complete passes through the training data.
+
+
+# Trains the model on the training set and evaluates on the validation set each epoch.
+# Performs one epoch of forward and backward passes on the training data, then assesses performance on unseen validation data.
+
+
+# Tracks and prints losses and F1 scores.
+# Records the loss and F1 metric values for both training and validation, and prints them for monitoring progress.
+
+
+# Adjusts learning rate based on validation performance.
+# Uses the scheduler to reduce the learning rate if the validation F1 score stops improving, to fine-tune training
+
+# Saves the model checkpoint with the best validation F1 score.
+
+# After training, saves the best model’s weights, the training/validation metrics log, and the experiment configuration to the output folder.
+
+
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader

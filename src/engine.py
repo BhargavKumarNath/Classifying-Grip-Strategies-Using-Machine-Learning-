@@ -1,3 +1,13 @@
+# The script implements training and validation routines for the Transformer using PyTorch. Specifically, it provides two functions:
+
+# train_epoch: Runs one full epoch (one pass through the training data) to update model parameters.
+
+# val_epoch: Runs a full epoch on the validation data without updating parameters (for evaluation).
+
+# Both functions also compute the F1 score using a torchmetrics scorer.
+
+
+
 import torch
 from tqdm import tqdm
 import torchmetrics
