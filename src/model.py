@@ -12,7 +12,6 @@ import math
 
 # (The LSTMClassifier and PositionalEncoding classes remain the same)
 class LSTMClassifier(nn.Module):
-    # ... (no changes here) ...
     def __init__(self, input_size, hidden_size, num_layers, num_classes, dropout=0.2):
         super(LSTMClassifier, self).__init__()
         self.lstm = nn.LSTM(
@@ -31,7 +30,6 @@ class LSTMClassifier(nn.Module):
         return out
 
 class PositionalEncoding(nn.Module):
-    # ... (no changes here) ...
     def __init__(self, d_model: int, dropout: float = 0.1, max_len: int = 5000):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
@@ -111,6 +109,90 @@ class GripTransformerClassifier(nn.Module):
             logits = self.classifier(cls_output)
             return logits, attention_weights
 
+class CNNTransformerClassifier(nn.Module):
+    """
+    A hybrid CNN-Transformer model for time-series classification.
+    The CNN block acts as a learned feature extractor on local time windows,
+    and the Transformer block learns global dependencies between these features.
+    """
+    def __init__(self, input_features, num_classes, seq_length, 
+                 cnn_out_channels, d_model, nhead, 
+                 num_encoder_layers, dim_feedforward, dropout):
+        super(CNNTransformerClassifier, self).__init__()
+        
+        # 1D CNN Feature Extractor
+        self.cnn_feature_extractor = nn.Sequential(
+            # First convolution learns simple patterns
+            nn.Conv1d(in_channels=input_features, out_channels=cnn_out_channels, kernel_size=7, padding=3, bias=False),
+            nn.BatchNorm1d(cnn_out_channels),
+            nn.ReLU(),
+            # Second convolution maps to the transformer's d_model dimension
+            nn.Conv1d(in_channels=cnn_out_channels, out_channels=d_model, kernel_size=5, padding=2, bias=False),
+            nn.BatchNorm1d(d_model),
+            nn.ReLU()
+        )
+        
+        # 2. Positional Encoding (for the sequence of features from the CNN)
+        self.pos_encoder = PositionalEncoding(d_model, dropout, max_len=seq_length + 1)
+        
+        # 3. Transformer Encoder
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model, nhead=nhead, dim_feedforward=dim_feedforward,
+            dropout=dropout, batch_first=True
+        )
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_encoder_layers)
+        
+        # 4. CLS Token and Final Classifier
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, d_model))
+        self.classifier = nn.Linear(d_model, num_classes)
+        self.d_model = d_model
+
+    def forward(self, x, return_attention=False):
+        # Input x shape: (batch_size, seq_length, input_features)
+        
+        # CNN Feature Extraction 
+        # Conv1d expects (batch, channels, length), so we permute
+        x = x.permute(0, 2, 1)
+        x_cnn = self.cnn_feature_extractor(x)  # -> (batch, d_model, seq_length)
+        # Permute back for the Transformer part
+        x_cnn = x_cnn.permute(0, 2, 1)  # -> (batch, seq_length, d_model)
+        
+        # Transformer Classification 
+        batch_size = x.shape[0]
+        cls_tokens = self.cls_token.expand(batch_size, -1, -1)
+        x_with_cls = torch.cat((cls_tokens, x_cnn), dim=1) 
+        
+        x_pos = x_with_cls.permute(1, 0, 2)
+        x_pos = self.pos_encoder(x_pos)
+        x_pos = x_pos.permute(1, 0, 2)
+
+        if not return_attention:
+            transformer_output = self.transformer_encoder(x_pos)
+            cls_output = transformer_output[:, 0, :]
+            logits = self.classifier(cls_output)
+            return logits
+        else:
+            # Manually iterate through layers to capture attention from the last one
+            attention_weights = None
+            output = x_pos
+            for i in range(self.transformer_encoder.num_layers - 1):
+                output = self.transformer_encoder.layers[i](output)
+            
+            last_layer = self.transformer_encoder.layers[-1]
+            # Manually call self-attention block with need_weights=True
+            attn_output, attention_weights = last_layer.self_attn(
+                last_layer.norm1(output), last_layer.norm1(output), last_layer.norm1(output),
+                need_weights=True
+            )
+            # Manually perform the rest of the layer's operations
+            output = output + last_layer.dropout1(attn_output)
+            output = output + last_layer._ff_block(last_layer.norm2(output))
+            
+            cls_output = output[:, 0, :]
+            logits = self.classifier(cls_output)
+            return logits, attention_weights
+
+
 if __name__ == '__main__':
     BATCH_SIZE = 4
     SEQ_LENGTH = 512
@@ -142,6 +224,19 @@ if __name__ == '__main__':
     dummy_input = torch.randn(BATCH_SIZE, SEQ_LENGTH, INPUT_FEATURES)
     output = transformer_model(dummy_input)
     print(f"Input shape: {dummy_input.shape}")
-    print(f"Output shape: {output.shape}") # Expected: (BATCH_SIZE, NUM_CLASSES)
+    print(f"Output shape: {output.shape}") 
     assert output.shape == (BATCH_SIZE, NUM_CLASSES)
     print("Transformer test passed!")
+
+    print("\n--- Testing CNNTransformerClassifier ---")
+    cnn_transformer_model = CNNTransformerClassifier(
+        input_features=18, num_classes=37, seq_length=512,
+        cnn_out_channels=64, d_model=128, nhead=4,
+        num_encoder_layers=3, dim_feedforward=512, dropout=0.1
+    )
+    dummy_input = torch.randn(4, 512, 18)
+    output = cnn_transformer_model(dummy_input)
+    print(f"Input shape: {dummy_input.shape}")
+    print(f"Output shape: {output.shape}")
+    assert output.shape == (4, 37)
+    print("CNN-Transformer test passed!")

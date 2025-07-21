@@ -59,7 +59,7 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.data_loader import GripSequenceDataset
-from src.model import LSTMClassifier, GripTransformerClassifier
+from src.model import LSTMClassifier, GripTransformerClassifier, CNNTransformerClassifier
 from src.engine import train_epoch, val_epoch
 from src.utils import save_experiment 
 from torchmetrics import F1Score
@@ -89,23 +89,46 @@ def main(config):
     
     # Model Selection and Initialization
     model_params = config['model']
-    transformer_params = config['transformer']
-    model = GripTransformerClassifier(
-        input_features=model_params['input_features'],
-        num_classes=model_params['num_classes'],
-        d_model=transformer_params['d_model'],
-        nhead=transformer_params['nhead'],
-        num_encoder_layers=transformer_params['num_encoder_layers'],
-        dim_feedforward=transformer_params['dim_feedforward'],
-        dropout=transformer_params['dropout'],
-        seq_length=model_params['sequence_length']
-    ).to(device)
+    model_type = config['training']['model_to_train']
+
+    if model_type == 'Transformer':
+        print("Initializing GripTransformerClassifier...")
+        transformer_params = config['transformer']
+        model = GripTransformerClassifier(
+            input_features=model_params['input_features'],
+            num_classes=model_params['num_classes'],
+            d_model=transformer_params['d_model'],
+            nhead=transformer_params['nhead'],
+            num_encoder_layers=transformer_params['num_encoder_layers'],
+            dim_feedforward=transformer_params['dim_feedforward'],
+            dropout=transformer_params['dropout'],
+            seq_length=model_params['sequence_length']
+        ).to(device)
+    elif model_type == 'CNNTransformer':
+        print("Initializing CNNTransformerClassifier...")
+        cnn_transformer_params = config['cnn_transformer']
+        model = CNNTransformerClassifier(
+            input_features=model_params['input_features'],
+            num_classes=model_params['num_classes'],
+            seq_length=model_params['sequence_length'],
+            cnn_out_channels=cnn_transformer_params['cnn_out_channels'],
+            d_model=cnn_transformer_params['d_model'],
+            nhead=cnn_transformer_params['nhead'],
+            num_encoder_layers=cnn_transformer_params['num_encoder_layers'],
+            dim_feedforward=cnn_transformer_params['dim_feedforward'],
+            dropout=cnn_transformer_params['dropout']
+        ).to(device)
+    else:
+        raise ValueError(f"Unknown model_to_train: {model_type}")
 
     # Loss, Optimizer, Scheduler, Metrics
-    loss_fn = nn.CrossEntropyLoss()
+    smoothing = config['training'].get('label_smoothing', 0.0)
+    print(f"Using label smoothing: {smoothing}")
+    loss_fn = nn.CrossEntropyLoss(label_smoothing=smoothing)
     optimizer = torch.optim.AdamW(model.parameters(), lr=config['training']['learning_rate'])
     scheduler = ReduceLROnPlateau(optimizer, mode='max', factor=0.1, patience=5)
     f1_scorer = F1Score(task="multiclass", num_classes=model_params['num_classes'], average='macro').to(device)
+
 
     # Training Loop
     best_val_f1 = -1.0
