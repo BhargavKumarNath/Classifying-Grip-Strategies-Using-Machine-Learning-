@@ -6,11 +6,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+st.title("Welcome to the Grip Strategy Classification Project")
 st.sidebar.success("Select a page above to begin")
 
-st.title("Welcome to the Grip Strategy Classification Project")
 st.markdown("""
 This interactive web application serves as a presentation medium for my dissertation project: **"Classifying Grip Strategies using Machine Learning on 3D Motion Capture Data"***.
+            
+Instead of static presentation, this tool allows you to explore the data, visualise the results, and understand the model's decisions in real time.
             
 The project is devided into two main phases:
             1. **Classical Machine Learning:** Where we explore the data, discover inherent grip strategies using unsupervised learning, and predict experimental conditions using supervised models.
