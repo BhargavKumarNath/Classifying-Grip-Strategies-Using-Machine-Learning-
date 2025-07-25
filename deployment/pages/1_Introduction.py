@@ -19,5 +19,3 @@ st.markdown("""
 - **Implement and interpret advanced Deep Learning models** (Transformers) for time series classification.
 """)
 
-st.image("https://i.imgur.com/gY8zQ0p.gif", caption="Conceptual representation fo a reach to grasp movement", use_column_width=True)
-
