@@ -76,3 +76,26 @@ def display_model_results(model_path, model_type):
         fig_attn = helpers.plot_attention_map(model, X_test[sample_idx], true_labels_name, class_names)
         st.pyplot(fig_attn)
 
+# --- Main Page Layout ---
+tab1, tab2 = st.tabs(["Model 1:The Vanilla Transformer", "Model 2: The CNN Transformer"])
+
+with tab1:
+    st.header("First Attempt: A Standard Transformer Classifier")
+    display_model_results(VANILLA_TRANSFORMER_PATH, "Transformer")
+    st.error("""
+**Critical Insights & Flaw:** The attention plot for the vanilla Transformer reveals a major problem. The model consistently focuses its attention on the **end of the sequence (timesteps > 400)**, which corresponds to the zero padding.
+             
+**It's not learning the movement; it's learning the *length* of the movement!** This is a classic "shortcut" that produces artificially good results on some classes but fails to generalise. This discovery prompted the development of a more robust model.
+""")
+    
+with tab2:
+    st.header("The Solution: A Hybrid CNN-Transformer")
+    st.markdown("""
+To force the model to learn from the kinematic patterns themselves, we prefixed the Transformer with a 1D Convolutional Neural Network (CNN). The CNN acts as a sophisticated feature extractor, identifying local patterns (like small hesitations or changes in acceleration) across the time-series. These rich, pre processed features are then fed to the Transformer.
+""")
+    display_model_results(CNN_TRANSFORMER_PATH, "CNNTransformer")
+    st.success("""
+**The Breakthrough Finding:** The Attention plot for the CNN-Transformer tells a completely different and far more compelling story. The model now focuses its attention almost entirely on the **initial planning of the movement (timesteps 0-150)**.
+               
+**This is a significant scientific insight.** It suggests that the most distinguishing characteristics of a grip are encoded in the preparatory phase, even before the main reach-to-grasp action begins. The model has learned a plausible and interpretable strategy that is directly relevant to motor control theories.
+""")
