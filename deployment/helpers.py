@@ -26,7 +26,7 @@ def load_data(dataset_name):
             if col in df.columns:
                 df[col] = df[col].str.lower()
         if 'DOB' in df.columns:
-            df['DOB'] = pd.to_datetime(df['DOB'], errors='coerce')
+            df['DOB'] = pd.to_datetime(df['DOB'], format="%d/%m/%Y", errors='coerce')
             df['Age'] = datetime.now().year - df['DOB'].dt.year
         return df
     except FileNotFoundError:
@@ -200,64 +200,82 @@ def plot_pca_scatter(_df, features_for_pca):
 
 # MACHINE LEARNING FUNCTIONS
 @st.cache_data
-def get_ml_inputs(_df, kinematic_features, target_col):
-    """Prepares data for machine learning models."""
-    X = _df[kinematic_features].copy()
-    if X.isnull().sum().sum() > 0:
-        X = X.fillna(X.mean())
-   
-    y = _df[target_col]
-    groups = _df['subjName']
-   
+def get_ml_data(_df, kinematic_features):
+    """
+    The ONE function to prepare data for ALL ML tasks.
+    It selects features, cleans rows with missing values, and scales the data.
+    Returns the cleaned DataFrame and the scaled numpy array.
+    """
+    # Select only the features we need for modeling.
+    df_model = _df[kinematic_features].copy()
+    
+    # --- The critical cleaning step ---
+    initial_rows = len(df_model)
+    df_model.dropna(inplace=True)
+    final_rows = len(df_model)
+    
+    if initial_rows != final_rows:
+        # Use st.session_state to show the warning only once per data load
+        if 'last_warning_count' not in st.session_state or st.session_state.last_warning_count != (initial_rows - final_rows):
+            st.warning(f"Note: {initial_rows - final_rows} rows were removed due to missing kinematic data.")
+            st.session_state.last_warning_count = initial_rows - final_rows
+
+    # Scale the cleaned features
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-   
-    return X_scaled, y, groups
+    X_scaled = scaler.fit_transform(df_model)
+    
+    return df_model, X_scaled
+
 
 @st.cache_resource
 def run_clustering_analysis(_X_scaled):
-    """Runs K-Means for a range of k and returns SSE and silhouette scores."""
+    """Runs K-Means for a range of k and returns optimization plots."""
     sse = []
     silhouette_scores = []
     k_range = range(2, 11)
-   
+    
     for k in k_range:
         kmeans = KMeans(n_clusters=k, random_state=42, n_init='auto')
         kmeans.fit(_X_scaled)
         sse.append(kmeans.inertia_)
         silhouette_scores.append(silhouette_score(_X_scaled, kmeans.labels_))
-       
+        
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 6))
-   
-    # Elbow Plot
+    
     ax1.plot(k_range, sse, 'bo-')
     ax1.set_xlabel('Number of Clusters (k)')
     ax1.set_ylabel('Sum of Squared Errors (SSE)')
     ax1.set_title('Elbow Method')
     ax1.grid(True)
-   
-    # Silhouette Plot
+    
     ax2.plot(k_range, silhouette_scores, 'ro-')
     ax2.set_xlabel('Number of Clusters (k)')
     ax2.set_ylabel('Silhouette Score')
     ax2.set_title('Silhouette Score Analysis')
     ax2.grid(True)
-   
+    
     plt.suptitle("Cluster Optimization Metrics")
     return fig
 
-@st.cache_resource
+
+# @st.cache_resource
 def plot_clusters(_X_scaled, n_clusters):
-    """Performs PCA, K-Means clustering and plots the results."""
+    """
+    Performs K-Means clustering and plots the results on PCA components.
+    This function now ONLY clusters and plots, it does not re-process data.
+    """
+    # ... function body remains the same ...
+    # Perform PCA just for visualization
     pca = PCA(n_components=2)
     X_pca = pca.fit_transform(_X_scaled)
-   
+    
     kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto')
+    # Fit on the original scaled data, not the PCA-reduced data
     labels = kmeans.fit_predict(_X_scaled)
-   
+    
     df_plot = pd.DataFrame(X_pca, columns=['PC1', 'PC2'])
     df_plot['Cluster'] = labels
-   
+    
     fig, ax = plt.subplots(figsize=(10, 8))
     sns.scatterplot(data=df_plot, x='PC1', y='PC2', hue='Cluster', palette='viridis', alpha=0.8, s=60, ax=ax)
     ax.set_title(f'K-Means Clusters (k={n_clusters}) on PCA Components')
@@ -265,34 +283,204 @@ def plot_clusters(_X_scaled, n_clusters):
     ax.set_ylabel('Principal Component 2')
     ax.legend(title='Discovered Strategy')
     ax.grid(True)
-   
+    
     return fig, labels
 
-@st.cache_resource
+
+
+# @st.cache_resource
 def run_supervised_model(_X_scaled, _y, _groups, feature_names):
     """Runs RF with GroupKFold and returns accuracy and feature importances."""
+    # ... function body remains the same ...
     le = LabelEncoder()
     y_encoded = le.fit_transform(_y)
-   
+    
     pipeline = Pipeline([
         ('classifier', RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1))
     ])
-   
+    
     group_kfold = GroupKFold(n_splits=5)
     cv_scores = cross_val_score(pipeline, _X_scaled, y_encoded, cv=group_kfold, groups=_groups)
-   
-    # Fit on all data to get feature importances
+    
     pipeline.fit(_X_scaled, y_encoded)
     importances = pipeline.named_steps['classifier'].feature_importances_
-   
+    
     feature_importance_df = pd.DataFrame({
         'feature': feature_names,
         'importance': importances
     }).sort_values('importance', ascending=False)
-   
+    
     fig, ax = plt.subplots(figsize=(12, 8))
-    sns.barplot(x='importance', y='feature', data=feature_importance_df.head(20), palette='rocket', ax=ax)
+    sns.barplot(data=feature_importance_df.head(20), x='importance', y='feature', palette='rocket', ax=ax)
     ax.set_title('Top 20 Most Important Features for Prediction')
     plt.tight_layout()
 
     return np.mean(cv_scores), fig
+
+# --- DEEP LEARNING HELPERS ---
+import os
+import yaml
+import torch
+from torch.utils.data import TensorDataset, DataLoader
+
+@st.cache_resource
+def load_trained_model(run_folder_path, model_type):
+    """Loads a pre trained model and its configuration from a run folder"""
+    config_path = os.path.join(run_folder_path, "config.yaml")
+    model_path = os.path.join(run_folder_path, "best_model.pth")
+
+    if not os.path.exists(config_path) or not os.path.exists(model_path):
+        st.error(f"Error: `config.yaml` or `best_model.pth` not found in {run_folder_path}")
+        return None, None
+    
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    
+    model_params = config["model"]
+
+    # use dummy device for loading
+    device = torch.device("cpu")
+
+    if model_type == "Transformer":
+        transformer_params = config["transformer"]
+        model = GripTransformerClassifier(
+            input_features = model_params["input_features"],
+            num_classes = model_params["num_classes"],
+            d_model = transformer_params["d_model"],
+            nhead = transformer_params["nhead"],
+            num_encoder_layers = transformer_params["num_encoder_layers"],
+            dim_feedforward = transformer_params["dim_feedforward"],
+            dropout = transformer_params["dropout"],
+            seq_length = model_params["sequence_length"]
+        )
+    elif model_type == "CNNTransformer":
+        cnn_transformer_params = config["cnn_transformer"]
+        model = CNNTransformerClassifier(
+            input_features = model_params["input_features"],
+            num_classes = model_params["num_classes"],
+            seq_length = model_params["sequence_length"],
+            cnn_out_channels = cnn_transformer_params["cnn_out_channels"],
+            d_model = cnn_transformer_params["d_model"],
+            nhead = cnn_transformer_params["nhead"],
+            num_encoder_layers = cnn_transformer_params["num_encoder_layers"],
+            dim_feedforward = cnn_transformer_params["dim_feedforward"],
+            dropout = cnn_transformer_params["dropout"]
+        )
+    else:
+        raise ValueError(f"Unknown model_type: {model_type}")
+    
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.eval()
+    return model, config
+
+@st.cache_data
+def load_dl_test_data(processed_data_path, raw_df_path):
+    """Loads the test data and the label to name mapping"""
+    X_test = np.load(os.path.join(processed_data_path, "X_test.npy"))
+    y_test = np.load(os.path.join(processed_data_path, "y_test.npy"))
+
+    try:
+        raw_df = pd.read_csv(raw_df_path)
+    except Exception as e:
+        st.error(f"Could not read raw CSV to create label map: {e}")
+        return None, None, None
+    
+    # Clean column names just in case
+    raw_df.columns = [col.strip() for col in raw_df.columns]
+    label_map = raw_df[['label_encoded', 'label']].drop_duplicates().sort_values('label_encoded').set_index('label_encoded')['label']
+    class_names = label_map.tolist()
+    
+    return X_test, y_test, class_names
+
+@st.cache_resource
+def plot_training_history(_metrics_df):
+    """Plots the loss and F1-score from the training metrics CSV."""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 6))
+    fig.suptitle("Model Training History", fontsize=18)
+
+    # Plotting Loss
+    ax1.plot(_metrics_df['epoch'], _metrics_df['train_loss'], 'bo-', label='Training Loss')
+    ax1.plot(_metrics_df['epoch'], _metrics_df['val_loss'], 'ro-', label='Validation Loss')
+    ax1.set_title('Loss vs. Epochs')
+    ax1.set_xlabel('Epoch')
+    ax1.set_ylabel('Loss')
+    ax1.legend()
+    ax1.grid(True)
+
+    # Plotting F1-Score
+    ax2.plot(_metrics_df['epoch'], _metrics_df['train_f1'], 'bo-', label='Training F1-Score (Macro)')
+    ax2.plot(_metrics_df['epoch'], _metrics_df['val_f1'], 'ro-', label='Validation F1-Score (Macro)')
+    ax2.set_title('F1-Score vs. Epochs')
+    ax2.set_xlabel('Epoch')
+    ax2.set_ylabel('F1-Score')
+    ax2.legend()
+    ax2.grid(True)
+
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    return fig
+
+@st.cache_data
+def get_model_predictions(_model, _X_test, _y_test, batch_size=32):
+    """Gets predictions for the entire test set."""
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    _model.to(device)
+    
+    test_dataset = TensorDataset(torch.from_numpy(_X_test).float(), torch.from_numpy(_y_test).long())
+    test_loader = DataLoader(test_dataset, batch_size=batch_size)
+
+    y_pred_list = []
+    y_true_list = []
+
+    with torch.no_grad():
+        for features, labels in test_loader:
+            features = features.to(device)
+            outputs = _model(features)
+            preds = torch.argmax(outputs, dim=1)
+            y_pred_list.extend(preds.cpu().numpy())
+            y_true_list.extend(labels.cpu().numpy())
+            
+    return y_true_list, y_pred_list
+
+def plot_attention_map(model, X_test_sample, true_label_name, class_names):
+    """
+    Generates the dual-axis attention plot for a single sample.
+    """
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.to(device)
+    
+    # Prepare the single sample
+    single_sequence = torch.from_numpy(X_test_sample).float().unsqueeze(0).to(device)
+
+    # Get prediction and attention weights
+    logits, attention_weights = model(single_sequence, return_attention=True)
+    pred_label_idx = torch.argmax(logits, dim=1).item()
+    pred_label_name = class_names[pred_label_idx]
+
+    # Extract attention for the CLS token on the sequence tokens
+    cls_attention = attention_weights[0, 0, 1:].detach().cpu().numpy()
+    
+    # Create the plot
+    fig, ax1 = plt.subplots(figsize=(18, 6))
+    
+    timesteps = np.arange(X_test_sample.shape[0])
+    # Plot first 3 kinematic features for context
+    ax1.plot(timesteps, X_test_sample[:, 0], color='black', label='Feature 1 (e.g., Index X)', alpha=0.6)
+    ax1.plot(timesteps, X_test_sample[:, 1], color='gray', label='Feature 2 (e.g., Index Y)', alpha=0.5, linestyle='--')
+    ax1.plot(timesteps, X_test_sample[:, 2], color='lightgray', label='Feature 3 (e.g., Index Z)', alpha=0.5, linestyle=':')
+    ax1.set_xlabel('Timestep')
+    ax1.set_ylabel('Scaled Kinematic Value', color='black')
+    ax1.legend(loc='upper left')
+    ax1.grid(True, axis='x')
+
+    # Create a second y-axis for the attention weights
+    ax2 = ax1.twinx()
+    ax2.plot(timesteps, cls_attention, color='orange', linewidth=2.5, label='CLS Token Attention')
+    ax2.set_ylabel('Attention Weight', color='orange')
+    ax2.tick_params(axis='y', labelcolor='orange')
+    ax2.set_ylim(0)
+    ax2.legend(loc='upper right')
+
+    plt.title(f'Attention Visualization\nTrue Label: {true_label_name} | Predicted: {pred_label_name}', fontsize=16)
+    fig.tight_layout()
+    
+    return fig
