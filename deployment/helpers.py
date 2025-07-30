@@ -208,6 +208,58 @@ def plot_pca_scatter(_df, features_for_pca):
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     return fig
 
+def get_dataset_info_card(df, dataset_name):
+    """Generates a title and a descriptive markdown string for a given dataset"""
+    title = ""
+    description = ""
+
+    if dataset_name == "aiming":
+        title = "Profile: Aiming Dataset"
+        description = """
+This dataset captures simple reaching movements to targets at varying distances. It forms the baseline for understanding fundamental motor control principles.
+
+- **Objective:** To analyze how the kinematics of arm transport (the 'reaching' part of a grasp) are modulated by target distance.
+- **Key Conditions:**
+    - `distance`: 'one', 'two', 'three'
+    - `visCond`: 'bino', 'clear', 'mono' (different visual feedback)
+    - `surface`: The texture of the target surface.
+- **Primary Research Question:** How do variables like Movement Time, Peak Velocity, and Path Length scale as a target gets farther away?
+"""
+    elif dataset_name == "prehension":
+        title = "Profile: Prehension Dataset"
+        description = """
+This dataset involves more complex reach to grasp movements, known as prehension. It examines the coordination between reaching and shaping the hand for a grasp.
+
+- **Objective:** To analsze how both arm transport and grip formation kinematics are affected by target distance and object properties.
+- **Key Conditions:**
+    - `distance`: 'near', 'middle', 'far'
+    - `visCond`: 'weak', 'strong' (different levels of visual clarity)
+    - `surface`: 'black', 'wood'
+- **Primary Research Question:** How does Maximum Grip Aperture (MGA) change with distance, and how is it coordinated with the peak velocity of the arm?
+"""
+    elif dataset_name == "visual_illusions":
+        title = "Profile: Visual Illusions Dataset"
+        description = """
+This dataset is designed to test a specific cognitive neuroscience hypothesis: the Two Visual Streams Theory. It investigates whether our actions are 'fooled' by the same visual illusions that trick our perception.
+
+- **Objective:** To determine if grip aperture is scaled to the *actual* physical size of an object or its *perceived* size under the influence of a visual illusion.
+- **Key Conditions:**
+    - `illusion`: 'Ebbinghaus', 'Ponzo'
+    - `targetSize`: The actual physical size of the target object.
+    - `targetPos`: The position or shape of the target.
+- **Primary Research Question:** Does the Maximum Grip Aperture (MGA) reflect the real size of the target, or does it incorrectly scale to the illusory size, providing evidence for the interaction between perception and action systems?
+"""
+
+    # Technical Details
+    info_df = pd.DataFrame({
+        "Column": df.columns,
+        "Data Type": df.dtypes.astype(str),
+        "Non-Null Count": df.notnull().sum(),
+        "Null Count": df.isnull().sum()
+    }).reset_index(drop=True)
+
+    return title, description, info_df
+
 # MACHINE LEARNING FUNCTIONS
 @st.cache_data
 def get_ml_data(_df, kinematic_features):
@@ -322,7 +374,7 @@ def run_supervised_model(_X_scaled, _y, _groups, feature_names):
     
     fig, ax = plt.subplots(figsize=(12, 8))
     sns.barplot(data=feature_importance_df.head(20), x='importance', y='feature', palette='rocket', ax=ax)
-    ax.set_title('Top 20 Most Important Features for Prediction')
+    ax.set_title('Most Important Features Driving the Prediction')
     plt.tight_layout()
 
     return np.mean(cv_scores), fig

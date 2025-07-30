@@ -98,11 +98,11 @@ tab1, tab2 = st.tabs(["Model 1:The Vanilla Transformer", "Model 2: The CNN Trans
 with tab1:
     st.header("First Attempt: A Standard Transformer Classifier")
     display_model_results(VANILLA_TRANSFORMER_PATH, "Transformer")
-    st.error("""
-**Critical Insights & Flaw:** The attention plot for the vanilla Transformer reveals a major problem. The model consistently focuses its attention on the **end of the sequence (timesteps > 400)**, which corresponds to the zero padding.
+#     st.error("""
+# **Critical Insights & Flaw:** The attention plot for the vanilla Transformer reveals a major problem. The model consistently focuses its attention on the **end of the sequence (timesteps > 400)**, which corresponds to the zero padding.
              
-**It's not learning the movement; it's learning the *length* of the movement!** This is a classic "shortcut" that produces artificially good results on some classes but fails to generalise. This discovery prompted the development of a more robust model.
-""")
+# **It's not learning the movement; it's learning the *length* of the movement!** This is a classic "shortcut" that produces artificially good results on some classes but fails to generalise. This discovery prompted the development of a more robust model.
+# """)
     
 with tab2:
     st.header("The Solution: A Hybrid CNN-Transformer")

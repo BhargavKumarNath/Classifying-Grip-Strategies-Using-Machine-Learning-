@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import helpers
-
+import numpy as np
 st.set_page_config(page_title="Machine Learning Models", layout="wide")
 st.title("🤖 Machine Learning Models")
 st.markdown("In this section, we apply machine learning to first *discover* underlying movement strategies (unsupervised) and then to *predict* experimental conditions from kinematics (supervised).")
@@ -21,20 +21,32 @@ if df_raw is not None:
 
     # Define features and target based on dataset
     if dataset_name == 'prehension':
-        kinematic_features = ['movTime', 'pathLength', 'MVel', 'MGA', 'MAcc', 'MDec', 'timeMGA', 'clear.logMAR']
+        # From your machine_learning_prehension.py script
+        # Includes a wide range of numeric features
+        base_features = df_raw.select_dtypes(include=np.number).columns.tolist()
+        # Exclude identifiers, keep all kinematic and vision features
+        kinematic_features = [col for col in base_features if col not in ['subjName', 'trialN', 'distance_ordinal']]
         target_col = 'distance'
+
     elif dataset_name == 'visual_illusions':
-        # Let's ensure we are using the correct features from your script
-        kinematic_features = ['movTime', 'pathLength', 'MVel', 'MGA', 'MAcc', 'MDec']
+        # From your machine_learning_visual_illusions.py script
+        kinematic_features = ['movTime', 'pathLength', 'MVel', 'MGA', 'MAcc', 'MDec', 
+                              'Zmax_index', 'Zmax_thumb', 'Zmax_wrist'] # Add Zmax features if they exist
         target_col = 'illusion'
+
     else: # aiming
-        kinematic_features = ['movTime', 'pathLength', 'PeakVelocity', 'MaxGripAperture', 'MAcc', 'MDec', 'timeMGA']
+        kinematic_features = ['movTime', 'pathLength', 'PeakVelocity', 'MaxGripAperture', 
+                              'MAcc', 'MDec', 'timeMGA', 'Zmax_index', 'Zmax_thumb', 'Zmax_wrist']
         target_col = 'distance'
     
-    # Filter for features that actually exist in the dataframe
+    
     kinematic_features = [f for f in kinematic_features if f in df_raw.columns]
+    
+    st.info(f"**Model Features:** Using {len(kinematic_features)} features for the supervised task. The most predictive features, such as `Zmax_...`, are included to replicate notebook results.")
+    with st.expander("Show all features used for modeling"):
+        st.write(kinematic_features)
 
-    # --- THE UNIFIED DATA PIPELINE ---
+    # THE UNIFIED DATA PIPELINE
     # 1. Get the cleaned and scaled data for ALL ML tasks. This function is cached.
     df_model, X_scaled = helpers.get_ml_data(df_raw, kinematic_features)
 
@@ -42,7 +54,7 @@ if df_raw is not None:
     # This creates the dataframe for analysis that matches X_scaled in length.
     df_analysis = df_raw.loc[df_model.index].copy()
 
-    # --- Tabs ---
+    # Tabs
     tab1, tab2 = st.tabs(["Unsupervised Learning: Discovering Strategies", "Supervised Learning: Predicting Conditions"])
 
     with tab1:

@@ -32,7 +32,7 @@ if df is not None:
     else: # aiming
         kinematic_vars = ['movTime', 'pathLength', 'PeakVelocity', 'MaxGripAperture', 'MAcc', 'MDec', 'timeMGA']
     
-    # Make sure all variables exist in the dataframe
+    
     kinematic_vars = [var for var in kinematic_vars if var in df.columns]
 
     # Show dataset info with outlier status
@@ -48,10 +48,23 @@ if df is not None:
     tab1, tab2, tab3, tab4 = st.tabs(["Data Overview", "Distributions", "Correlations", "Dimensionality Reduction (PCA)"])
 
     with tab1:
-        st.subheader("Dataset Preview")
-        st.dataframe(df.head())
-        st.subheader("Dataset Info")
-        st.text(str(df.info()))
+        st.subheader("Dataset Profile & Technical Details")
+        
+        title, description, info_df = helpers.get_dataset_info_card(df, dataset_name)
+        
+        col1, col2 = st.columns([1, 1.5]) 
+
+        with col1:
+            st.markdown(f"#### {title}")
+            st.markdown(description)
+
+        with col2:
+            st.markdown("##### Technical Information")
+            
+            st.dataframe(df.head(), height=210)
+            
+            with st.expander("Show Column Data Types and Null Counts"):
+                st.dataframe(info_df, use_container_width=True)
 
     with tab2:
         st.subheader("Distributions of Experimental and Subject Variables")
