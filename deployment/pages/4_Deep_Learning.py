@@ -23,60 +23,76 @@ RAW_DATA_PATH = "data/02_processed/GripFormer_preprocessed_dataset.csv"
 X_test, y_test, class_names = helpers.load_dl_test_data(PROCESSED_DATA_PATH, RAW_DATA_PATH)
 
 def display_model_results(model_path, model_type):
-    """A helper function to display all results for a given model"""
+    """A helper function to display all results for a given model with an improved layout."""
     if not os.path.exists(model_path):
         st.error(f"Could not find the run folder: `{model_path}`. Please check the path.")
         return
-    
+
     # Load model and metrics
     model, config = helpers.load_trained_model(model_path, model_type)
-    metrics_df = pd.read_csv(os.path.join(model_path, "training_metrics.csv"))
+    metrics_df = pd.read_csv(os.path.join(model_path, 'training_metrics.csv'))
 
     if model is None:
-        return 
-    
+        return
+        
     st.subheader(f"Model Performance: {model_type}")
-
-    # Display train history
+    
+    # Display training history in an expander
     with st.expander("Show Training History (Loss & F1-Score)"):
         fig_history = helpers.plot_training_history(metrics_df)
         st.pyplot(fig_history)
 
-    # Get predictions
+    # Get predictions for the whole test set
     y_true, y_pred = helpers.get_model_predictions(model, X_test, y_test)
-
-    col1, col2 = st.columns([1, 2])
+    
+    st.markdown("---")
+    
+    st.subheader("Test Set Evaluation")
+    
+    col1, col2 = st.columns(2) # Create two columns
 
     with col1:
-        st.text("Classification Report")
-        report = classification_report(y_true, y_pred, target_names=class_names, output_dict=True, zero_division=0)
-        report_df = pd.DataFrame(report).transpose()
-        st.dataframe(report_df)
-        st.metric("Overall Accuracy", f"{report_df.loc["accuracy", "precision"]:.2f%}")
-    
+        # Classification Report
+        st.markdown("##### Classification Report")
+        report_dict = classification_report(y_true, y_pred, target_names=class_names, output_dict=True, zero_division=0)
+        
+        # Display key overall metrics at the top
+        st.metric("Overall Accuracy", f"{report_dict['accuracy']:.2%}")
+        st.metric("Macro Avg F1-Score", f"{report_dict['macro avg']['f1-score']:.4f}")
+        
+        # Put the detailed report in an expander to save space
+        with st.expander("Show Detailed Report"):
+            report_df = pd.DataFrame(report_dict).transpose()
+            st.dataframe(report_df)
+            
     with col2:
-        st.text("Confusion Matrix")
+        # Confusion Matrix
+        st.markdown("##### Confusion Matrix")
         cm = confusion_matrix(y_true, y_pred)
         fig_cm, ax = plt.subplots(figsize=(10, 8))
-        sns.heatmap(cm, annot=False, cmap="Blues", ax=ax)
-        ax.set_title("Confusion Matrix")
-        ax.set_xlabel("Predicted")
-        ax.set_ylabel("True")
+        sns.heatmap(cm, annot=False, cmap='Blues', ax=ax)
+        ax.set_title('Confusion Matrix')
+        ax.set_xlabel('Predicted')
+        ax.set_ylabel('True')
         st.pyplot(fig_cm)
-
     
-    st.subheader("Inperpreting the 'Black Box' with Attention")
-    st.markdown("Here we visualise what parts of the movement sequence the model paid attention to when making a decision for a specific test sample")
-
-    # Interactive sample selection
+    st.markdown("---") 
+    
+    st.subheader("Interpreting the 'Black Box' with Attention")
+    st.markdown("Here we visualize what parts of the movement sequence the model paid attention to when making a decision for a specific test sample.")
+    
     sample_idx = st.slider("Select a test sample to inspect:", 0, len(X_test) - 1, 0, key=f"slider_{model_type}")
-
+    
     with st.spinner("Generating attention plot..."):
-        true_labels_name = class_names[y_test[sample_idx]]
-        fig_attn = helpers.plot_attention_map(model, X_test[sample_idx], true_labels_name, class_names)
+        true_label_name = class_names[y_test[sample_idx]]
+        # --- CAPTURE THE DYNAMIC INSIGHT ---
+        fig_attn, insight_text = helpers.plot_attention_map(model, X_test[sample_idx], true_label_name, class_names)
         st.pyplot(fig_attn)
+        # --- DISPLAY THE DYNAMIC INSIGHT ---
+        st.info(insight_text)
 
-# --- Main Page Layout ---
+
+# Main Page Layout
 tab1, tab2 = st.tabs(["Model 1:The Vanilla Transformer", "Model 2: The CNN Transformer"])
 
 with tab1:

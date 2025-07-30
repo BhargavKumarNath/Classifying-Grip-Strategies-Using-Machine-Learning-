@@ -14,6 +14,16 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 from sklearn.metrics import silhouette_score
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
+import os
+import yaml
+import torch
+from torch.utils.data import TensorDataset, DataLoader
+
+
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.model import GripTransformerClassifier, CNNTransformerClassifier
+
 
 # DATA LOADING AND CACHING 
 @st.cache_data
@@ -318,10 +328,6 @@ def run_supervised_model(_X_scaled, _y, _groups, feature_names):
     return np.mean(cv_scores), fig
 
 # --- DEEP LEARNING HELPERS ---
-import os
-import yaml
-import torch
-from torch.utils.data import TensorDataset, DataLoader
 
 @st.cache_resource
 def load_trained_model(run_folder_path, model_type):
@@ -419,7 +425,7 @@ def plot_training_history(_metrics_df):
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     return fig
 
-@st.cache_data
+# @st.cache_data
 def get_model_predictions(_model, _X_test, _y_test, batch_size=32):
     """Gets predictions for the entire test set."""
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -443,38 +449,49 @@ def get_model_predictions(_model, _X_test, _y_test, batch_size=32):
 
 def plot_attention_map(model, X_test_sample, true_label_name, class_names):
     """
-    Generates the dual-axis attention plot for a single sample.
+    Generates the dual-axis attention plot and a dynamic insight string.
     """
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
     
-    # Prepare the single sample
     single_sequence = torch.from_numpy(X_test_sample).float().unsqueeze(0).to(device)
-
-    # Get prediction and attention weights
     logits, attention_weights = model(single_sequence, return_attention=True)
     pred_label_idx = torch.argmax(logits, dim=1).item()
     pred_label_name = class_names[pred_label_idx]
 
-    # Extract attention for the CLS token on the sequence tokens
     cls_attention = attention_weights[0, 0, 1:].detach().cpu().numpy()
     
-    # Create the plot
-    fig, ax1 = plt.subplots(figsize=(18, 6))
+    # --- DYNAMIC INSIGHT GENERATION ---
+    peak_attention_timestep = np.argmax(cls_attention)
+    peak_attention_value = np.max(cls_attention)
     
+    # Define phases of the movement
+    if peak_attention_timestep < 150:
+        phase = "the initial planning phase"
+    elif peak_attention_timestep > 400 and X_test_sample[peak_attention_timestep, 0] == 0:
+        phase = "the zero-padded end of the sequence"
+    else:
+        phase = "the main execution phase"
+        
+    dynamic_insight = (
+        f"For this specific sample, the model focused most of its attention at **timestep {peak_attention_timestep}** "
+        f"(with a weight of {peak_attention_value:.4f}). This falls within **{phase}** of the movement."
+    )
+    # --- END DYNAMIC INSIGHT ---
+    
+    fig, ax1 = plt.subplots(figsize=(18, 6))
     timesteps = np.arange(X_test_sample.shape[0])
-    # Plot first 3 kinematic features for context
+    
     ax1.plot(timesteps, X_test_sample[:, 0], color='black', label='Feature 1 (e.g., Index X)', alpha=0.6)
     ax1.plot(timesteps, X_test_sample[:, 1], color='gray', label='Feature 2 (e.g., Index Y)', alpha=0.5, linestyle='--')
-    ax1.plot(timesteps, X_test_sample[:, 2], color='lightgray', label='Feature 3 (e.g., Index Z)', alpha=0.5, linestyle=':')
     ax1.set_xlabel('Timestep')
     ax1.set_ylabel('Scaled Kinematic Value', color='black')
     ax1.legend(loc='upper left')
     ax1.grid(True, axis='x')
 
-    # Create a second y-axis for the attention weights
     ax2 = ax1.twinx()
     ax2.plot(timesteps, cls_attention, color='orange', linewidth=2.5, label='CLS Token Attention')
+    ax2.fill_between(timesteps, 0, cls_attention, color='orange', alpha=0.2) # Add a fill for emphasis
     ax2.set_ylabel('Attention Weight', color='orange')
     ax2.tick_params(axis='y', labelcolor='orange')
     ax2.set_ylim(0)
@@ -483,4 +500,4 @@ def plot_attention_map(model, X_test_sample, true_label_name, class_names):
     plt.title(f'Attention Visualization\nTrue Label: {true_label_name} | Predicted: {pred_label_name}', fontsize=16)
     fig.tight_layout()
     
-    return fig
+    return fig, dynamic_insight 
