@@ -1,5 +1,10 @@
 pandas
-scikit-learn
+numpy
 matplotlib
 seaborn
-jupyterlab
+scikit-learn
+scipy
+streamlit
+xgboost
+shap
+statsmodels
